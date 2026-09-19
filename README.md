@@ -170,32 +170,55 @@ psql -U postgres -h localhost -d prime_db \
 
 ### Migrations & seed
 
-> **Important:** migrations must run as the **schema owner** (`prime_user`),
-> NOT as `prime_app` — the app role cannot run DDL. The API connects as
-> `prime_app` because that is what makes RLS policies actually apply.
+> **Important:** migrations and seeding must run as the **schema owner**
+> (`prime_user`), NOT as `prime_app` — the app role cannot run DDL, and
+> because RLS is FORCEd on user tables, any INSERT from `prime_app` without a
+> session user id is rejected. The API itself connects as `prime_app`; only
+> migrate/seed use the owner URL.
+
+All commands in this section work from the **repo root**
+(`pnpm --filter api …`). First make sure **something is listening** on the
+port you will use:
 
 ```bash
-# Docker path — owner connects through pgbouncer (host 6432)
-cd apps/api
-DATABASE_URL="postgresql://prime_user:prime_password@localhost:6432/prime_db" pnpm prisma migrate deploy
-DATABASE_URL="postgresql://prime_user:prime_password@localhost:6432/prime_db" pnpm prisma generate
-DATABASE_URL="postgresql://prime_user:prime_password@localhost:6432/prime_db" pnpm seed
+# Docker path → pgbouncer on 6432 (run the compose stack first!):
+docker compose -f docker/docker-compose.yml up -d --build
+# verify:
+psql "postgresql://prime_user:prime_password@localhost:6432/prime_db" -c 'select 1'
 
-# No-Docker path — same as above but directly to Postgres (5432) instead of 6432
-DATABASE_URL="postgresql://prime_user:prime_password@localhost:5432/prime_db" pnpm prisma migrate deploy
+# No-Docker path → your own Postgres on 5432 (create the roles first, see below):
+psql -U postgres -h localhost -c "CREATE ROLE prime_user LOGIN PASSWORD 'prime_password' SUPERUSER;"
+psql -U postgres -h localhost -c "CREATE DATABASE prime_db OWNER prime_user;"
+psql -U postgres -h localhost -d prime_db \
+  -c "CREATE ROLE prime_app LOGIN PASSWORD 'prime_app_password' NOSUPERUSER NOBYPASSRLS;"
+psql -U postgres -h localhost -d prime_db -c "GRANT USAGE ON SCHEMA public TO prime_app;"
+psql -U postgres -h localhost -d prime_db \
+  -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO prime_app;"
+# verify:
+psql "postgresql://prime_user:prime_password@localhost:5432/prime_db" -c 'select 1'
 ```
 
-Or from the repo root using the owner URL on the variable Prisma actually
-reads — overwrite `DATABASE_URL` for the migrate step:
+> Substitute your own host/port/passwords — the snippets above are defaults.
+
+Then migrate, generate, and seed **using the owner URL**:
 
 ```bash
-# Docker path (or localhost:5432 instead of 6432 when using local Postgres)
-DATABASE_URL="postgresql://prime_user:prime_password@localhost:6432/prime_db" pnpm migrate
-DATABASE_URL="postgresql://prime_user:prime_password@localhost:6432/prime_db" pnpm seed
+# Docker path (host 6432):
+DATABASE_URL="postgresql://prime_user:prime_password@localhost:6432/prime_db" pnpm --filter api prisma migrate deploy
+DATABASE_URL="postgresql://prime_user:prime_password@localhost:6432/prime_db" pnpm --filter api prisma generate
+DATABASE_URL="postgresql://prime_user:prime_password@localhost:6432/prime_db" NODE_ENV=development pnpm --filter api seed
+
+# No-Docker path (host 5432):
+DATABASE_URL="postgresql://prime_user:prime_password@localhost:5432/prime_db" pnpm --filter api prisma migrate deploy
+DATABASE_URL="postgresql://prime_user:prime_password@localhost:5432/prime_db" NODE_ENV=development pnpm --filter api seed
 ```
 
-Then run the API normally with the runtime `DATABASE_URL` (the `prime_app`
-string) restored in `apps/api/.env`.
+`seed.js` loads `apps/api/.env` itself (guard + `DATABASE_URL`), but the
+command-line `DATABASE_URL` overrides it — always point it at an owner-capable
+role, never `prime_app` (RLS FORCE rejects inserts without a session user).
+
+Then run the API normally: it uses the runtime `DATABASE_URL` in
+`apps/api/.env` (the `prime_app` string).
 
 ### Run the API
 
@@ -405,7 +428,11 @@ Seeded by `pnpm seed` (development only):
 | `eas build` errors | Run `eas build:configure` first; confirm you're logged in; `android/` must exist for `--local`. |
 | Node version errors | `node -v` must be ≥ 24. Use `nvm use 24`. |
 | Background sync not firing | Normal in Expo Go — test in a dev build/APK; check notifications permission. |
-| `prisma migrate` fails with permission denied | You ran it as `prime_app`. Use `ADMIN_DATABASE_URL` (owner role). |
+| `prisma migrate` fails with permission denied | You ran it as `prime_app`. Use an owner URL (`prime_user`) instead. |
+| `P1001: Can't reach database server at localhost:6432` | Nothing is listening there — the docker stack isn't up, or you meant local Postgres on 5432 (no-Docker path). Run `docker compose up -d --build` first, or use your local port. |
+| `P1000: authentication failed for 'prime_user'` | That role doesn't exist (or has a different password) on your Postgres. Create it (`CREATE ROLE prime_user LOGIN PASSWORD '…' SUPERUSER;`) or substitute your real credentials. |
+| Seed aborts with "must only run in development" | `NODE_ENV` wasn't `development`. It's auto-loaded from `.env` by the fixed seed, or pass `NODE_ENV=development` explicitly. |
+| Seed inserts rejected by RLS / rows vanish | Seed/DDL ran as `prime_app`. Re-run with the owner URL — RLS FORCE blocks unflagged `prime_app` inserts. |
 | Expo Rate-Limit warning about IPv6 keygen | Harmless Express note; not functional. |
 
 ---

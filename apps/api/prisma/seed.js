@@ -1,15 +1,21 @@
-// Seed script - run with: pnpm --filter api seed
+// Seed script - run with: DATABASE_URL=<owner-url> pnpm --filter api seed
 // Guard: never runs outside development (design doc 10.5).
 if (process.env.NODE_ENV !== 'development') {
   console.error('ERROR: Seed must only run in development environment')
   process.exit(1)
 }
 
+import 'dotenv/config'
 import { PrismaClient, Prisma } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
 import argon2 from 'argon2'
 import { v7 as uuidv7 } from 'uuid'
 
-const prisma = new PrismaClient()
+// RLS is FORCEd on user-owned tables, so seeding must connect as the schema
+// owner (prime_user) - the NOBYPASSRLS app role (prime_app) would get every
+// INSERT rejected by the "userId = prime_current_user_id()" check.
+const connectionString = process.env.DATABASE_URL
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
 
 const USER_1 = '01900000-0000-7000-8000-000000000001'
 const USER_2 = '01900000-0000-7000-8000-000000000002'
