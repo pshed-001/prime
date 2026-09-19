@@ -19,5 +19,8 @@
     "migrate": "npm run migrate -w api",
     "generate": "npm run generate -w api",
     "audit": "npm audit"
+  },
+  "devDependencies": {
+    "react": "19.2.3"
   }
 }
