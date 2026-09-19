@@ -6,13 +6,8 @@
     "orientation": "portrait",
     "scheme": "prime",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "privacy": "unlisted",
     "description": "Offline-first personal finance and productivity platform by ITGEL.",
     "icon": "./assets/icon.png",
-    "splash": {
-      "backgroundColor": "#7c3aed"
-    },
     "platforms": ["android", "ios"],
     "plugins": [
       "expo-router",
@@ -21,7 +16,6 @@
       "expo-sqlite",
       "expo-camera",
       "expo-notifications",
-      "expo-print",
       "expo-image-picker",
       "expo-dev-client",
       ["expo-background-fetch", { "maximumBackgroundFetchInterval": 60 }],

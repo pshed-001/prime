@@ -22,7 +22,7 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
-    "@prime/shared": "workspace:*",
+    "@prime/shared": "",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.0.0",
     "argon2": "^0.44.0",
