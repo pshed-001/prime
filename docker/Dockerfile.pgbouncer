@@ -1,0 +1,16 @@
+FROM alpine:3.20
+
+RUN apk add --no-cache pgbouncer
+
+COPY pgbouncer.ini /etc/pgbouncer/pgbouncer.ini
+COPY make_userlist.sh /usr/local/bin/make_userlist.sh
+
+RUN chmod +x /usr/local/bin/make_userlist.sh \
+  && chown -R postgres:postgres /etc/pgbouncer
+
+USER postgres
+
+EXPOSE 5432
+
+# Regenerate userlist from env on every start, then run pgbouncer.
+CMD ["sh", "-c", "/usr/local/bin/make_userlist.sh && exec pgbouncer /etc/pgbouncer/pgbouncer.ini"]

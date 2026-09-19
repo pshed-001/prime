@@ -1,0 +1,50 @@
+{
+  "name": "mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "build:development": "eas build --platform android --profile development",
+    "build:preview": "eas build --platform android --profile preview",
+    "build:production": "eas build --platform android --profile production"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.0",
+    "@prime/shared": "workspace:*",
+    "@react-native-community/datetimepicker": "^8.0.0",
+    "@react-native-community/netinfo": "^11.4.1",
+    "@shopify/react-native-skia": "^2.0.0",
+    "axios": "^1.18.1",
+    "expo": "~56.0.12",
+    "expo-background-fetch": "~56.0.19",
+    "expo-camera": "~56.0.8",
+    "expo-crypto": "~15.0.0",
+    "expo-dev-client": "~56.0.20",
+    "expo-file-system": "~56.0.11",
+    "expo-haptics": "~56.0.3",
+    "expo-image-picker": "~56.0.18",
+    "expo-local-authentication": "~56.0.4",
+    "expo-notifications": "~56.0.18",
+    "expo-print": "~56.0.4",
+    "expo-router": "~56.2.11",
+    "expo-secure-store": "~56.0.4",
+    "expo-sqlite": "~56.0.5",
+    "expo-status-bar": "~3.0.0",
+    "expo-task-manager": "~56.0.27",
+    "nativewind": "^4.2.6",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-reanimated": "4.3.1",
+    "react-native-svg": "^15.0.0",
+    "react-native-webview": "^13.0.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.0",
+    "typescript": "^5.9.0"
+  }
+}

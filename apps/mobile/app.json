@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "PRIME",
+    "slug": "prime",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "prime",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "privacy": "unlisted",
+    "description": "Offline-first personal finance and productivity platform by ITGEL.",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#7c3aed"
+    },
+    "platforms": ["android", "ios"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-local-authentication",
+      "expo-sqlite",
+      "expo-camera",
+      "expo-notifications",
+      "expo-print",
+      "expo-image-picker",
+      "expo-dev-client",
+      ["expo-background-fetch", { "maximumBackgroundFetchInterval": 60 }],
+      "expo-task-manager"
+    ],
+    "ios": {
+      "bundleIdentifier": "com.itgel.prime",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.itgel.prime",
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.CAMERA"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "prime-itgel"
+      }
+    }
+  }
+}

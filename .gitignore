@@ -1,0 +1,17 @@
+node_modules/
+.pnpm-store/
+.pgdata/
+dist/
+build/
+.expo/
+.expo-shared/
+*.log
+.env
+.env.local
+.DS_Store
+*.tsbuildinfo
+coverage/
+apps/mobile/android/
+apps/mobile/ios/
+.idea/
+.vscode/

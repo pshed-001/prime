@@ -1,0 +1,20 @@
+{
+  "name": "prime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PRIME - Personal Finance and Productivity Platform (ITGEL)",
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm run -r --parallel dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:mobile": "pnpm --filter mobile start",
+    "build": "pnpm --filter @prime/shared build",
+    "seed": "pnpm --filter api seed",
+    "migrate": "pnpm --filter api migrate",
+    "generate": "pnpm --filter api generate",
+    "audit": "pnpm audit --recursive"
+  }
+}

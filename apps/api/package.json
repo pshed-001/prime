@@ -1,0 +1,48 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PRIME API - Node.js 24 + Express 5 + Prisma 7 + PostgreSQL 17",
+  "main": "src/index.js",
+  "prisma": {
+    "config": "prisma.config.ts"
+  },
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "build": "echo 'API is plain ESM - nothing to build'",
+    "prisma": "prisma",
+    "migrate": "prisma migrate dev",
+    "deploy": "prisma migrate deploy",
+    "generate": "prisma generate",
+    "seed": "node prisma/seed.js"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "@prime/shared": "workspace:*",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.0.0",
+    "argon2": "^0.44.0",
+    "axios": "^1.18.1",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "express-slow-down": "^3.1.0",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^1.4.5-lts.2",
+    "pg": "^8.23.0",
+    "uuid": "^14.0.1",
+    "winston": "^3.19.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "prisma": "^7.0.0"
+  }
+}

@@ -1,0 +1,90 @@
+# PRIME development stack. Copy .env.example to .env and edit before `up`.
+# Pgbouncer sits in front of Postgres (transaction pooling); the API only
+# ever talks to pgbouncer, never directly to the database.
+#
+#   docker compose up --build
+name: prime
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: prime-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:-prime_app_password}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  pgbouncer:
+    build:
+      context: .
+      dockerfile: Dockerfile.pgbouncer
+    container_name: prime-pgbouncer
+    environment:
+      PGBOUNCER_DB_HOST: postgres
+      PGBOUNCER_DB_PORT: "5432"
+      PGBOUNCER_DATABASE: ${POSTGRES_DB}
+      PGBOUNCER_APP_NAME: prime_app
+      PGBOUNCER_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:-prime_app_password}
+      PGBOUNCER_ADMIN_NAME: ${POSTGRES_USER}
+      PGBOUNCER_ADMIN_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:6432:5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: prime-api
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: "3000"
+      DATABASE_URL: postgresql://prime_app:${POSTGRES_APP_PASSWORD:-prime_app_password}@pgbouncer:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+    ports:
+      - "127.0.0.1:${API_HOST_PORT}:3000"
+    depends_on:
+      pgbouncer:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: prime-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "127.0.0.1:5050:80"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  pgadmin:

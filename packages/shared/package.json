@@ -1,0 +1,17 @@
+{
+  "name": "@prime/shared",
+  "version": "1.0.0",
+  "description": "Single source of truth for PRIME Zod schemas and constants (API + mobile)",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "build": "echo '@prime/shared is source-only ESM - nothing to build'"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  }
+}
