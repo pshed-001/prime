@@ -9,10 +9,6 @@ import { AppError, ErrorCodes, ErrorMessage } from '../lib/errors.js'
 const ipKey = (req) =>
   ipKeyGenerator(req.ip ?? req.socket?.remoteAddress ?? req.connection?.remoteAddress ?? 'unknown')
 
-function onLimitReached(req, res, next) {
-  // eslint-disable-next-line no-unused-vars
-  ;(async () => {})()
-}
 
 const failHandler = (req, res) => {
   res.set('Cache-Control', 'no-store, private')
@@ -32,8 +28,7 @@ export const ipRateLimiter = rateLimit({
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   keyGenerator: ipKey,
-  handler: failHandler,
-  onLimitReached
+  handler: failHandler
 })
 
 // Step 6 - progressive delay before the hard limit
@@ -53,8 +48,7 @@ export const userRateLimiter = rateLimit({
   // Authenticated requests bucket by user; unauthenticated requests keep the
   // IPv6-aggregated IP key so they cannot be dodged via address rotation.
   keyGenerator: (req) => (req.user ? `user:${req.user.id}` : ipKey(req)),
-  handler: failHandler,
-  onLimitReached
+  handler: failHandler
 })
 
 export const AccountLockedError = (unlockTime) => {

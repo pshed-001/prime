@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   // No url field here. Prisma v7 reads DATABASE_URL from the environment
-  // automatically. See apps/api/.env and prisma.config.ts.
 }
 
 // ---------------------------------------------------------------------------
