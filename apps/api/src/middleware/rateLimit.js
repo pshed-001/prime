@@ -1,7 +1,13 @@
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import expressSlowDown from 'express-slow-down'
 import { env } from '../config/env.js'
 import { AppError, ErrorCodes, ErrorMessage } from '../lib/errors.js'
+
+// IPv6-aware key. express-rate-limit's default aggregates IPv6 to a /56
+// subnet; callers must route IP fallbacks through ipKeyGenerator or v8 rejects
+// the config at boot and IPv6 addresses can rotate /64s to dodge the limiter.
+const ipKey = (req) =>
+  ipKeyGenerator(req.ip ?? req.socket?.remoteAddress ?? req.connection?.remoteAddress ?? 'unknown')
 
 function onLimitReached(req, res, next) {
   // eslint-disable-next-line no-unused-vars
@@ -25,6 +31,7 @@ export const ipRateLimiter = rateLimit({
   limit: env.rateLimit.max,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
+  keyGenerator: ipKey,
   handler: failHandler,
   onLimitReached
 })
@@ -33,7 +40,8 @@ export const ipRateLimiter = rateLimit({
 export const slowDown = expressSlowDown({
   windowMs: env.rateLimit.windowMs,
   delayAfter: Math.floor(env.rateLimit.max * 0.8),
-  delayMs: (hits) => Math.min(hits * 100, 1000)
+  delayMs: (hits) => Math.min(hits * 100, 1000),
+  keyGenerator: ipKey
 })
 
 // Step 9 - per-authenticated-user limiter (after auth, separate from IP)
@@ -42,7 +50,9 @@ export const userRateLimiter = rateLimit({
   limit: env.rateLimit.max,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
-  keyGenerator: (req) => (req.user ? `user:${req.user.id}` : req.ip),
+  // Authenticated requests bucket by user; unauthenticated requests keep the
+  // IPv6-aggregated IP key so they cannot be dodged via address rotation.
+  keyGenerator: (req) => (req.user ? `user:${req.user.id}` : ipKey(req)),
   handler: failHandler,
   onLimitReached
 })

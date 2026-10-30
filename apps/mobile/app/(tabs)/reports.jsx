@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react'
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
-import { Share } from 'react-native'
+import { useEffect, useMemo, useState } from 'react'
+import { FlatList, Pressable, StyleSheet, Text, View, Share } from 'react-native'
 import { SyncStatusBar } from '../../components/SyncStatusBar.jsx'
 import { CurrencyText } from '../../components/CurrencyText.jsx'
 import { getDb } from '../../lib/database.js'
 import { generatePreviousDayReport } from '../../lib/midnight.js'
 import { useSyncStore } from '../../store/sync.js'
-import { colors, radii, spacing } from '../../constants/theme.js'
+import { radii, spacing, useTheme } from '../../constants/theme.js'
 
 export default function ReportsScreen() {
   const refreshCounts = useSyncStore((s) => s.refreshCounts)
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const [reports, setReports] = useState([])
   const [generating, setGenerating] = useState(false)
 
@@ -85,31 +86,32 @@ export default function ReportsScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
-  header: { padding: spacing.lg },
-  generate: {
-    backgroundColor: colors.secondary,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginTop: spacing.sm
-  },
-  generateText: { color: '#fff', fontWeight: '600', fontSize: 14 },
-  list: { padding: spacing.lg, paddingTop: 0 },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md
-  },
-  date: { fontSize: 15, fontWeight: '600', color: colors.textPrimary, marginBottom: 8 },
-  line: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 2 },
-  net: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 6, marginTop: 6 },
-  label: { fontSize: 13, color: colors.textSecondary },
-  share: { marginTop: 12, alignSelf: 'flex-end' },
-  shareText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-  empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 32, textAlign: 'center' }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    header: { padding: spacing.lg },
+    generate: {
+      backgroundColor: colors.secondary,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      paddingVertical: 12,
+      marginTop: spacing.sm
+    },
+    generateText: { color: '#ffffff', fontWeight: '600', fontSize: 14 },
+    list: { padding: spacing.lg, paddingTop: 0 },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.lg,
+      padding: spacing.lg,
+      marginBottom: spacing.md
+    },
+    date: { fontSize: 15, fontWeight: '600', color: colors.textPrimary, marginBottom: 8 },
+    line: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 2 },
+    net: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 6, marginTop: 6 },
+    label: { fontSize: 13, color: colors.textSecondary },
+    share: { marginTop: 12, alignSelf: 'flex-end' },
+    shareText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+    empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 32, textAlign: 'center' }
+  })

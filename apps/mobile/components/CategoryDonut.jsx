@@ -1,14 +1,17 @@
+import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Canvas, Path, Skia, Group } from '@shopify/react-native-skia'
 import { CATEGORY_DICT } from '../constants/categories.js'
-import { colors, radii } from '../constants/theme.js'
+import { radii, useTheme } from '../constants/theme.js'
 import { formatMoney } from '../utils/format.js'
 
-// Donut of spending by category (design doc 6.1.1). Uses the fixed category
-// palette; centre shows the total.
-const PALETTE = ['#7c3aed', '#0d9488', '#f59e0b', '#EF4444', '#6366f1', '#10B981', '#9ca3af']
+// Donut of spending by category (design doc 6.1.1). Uses the finance palette
+// (no purple); centre shows the total.
+const PALETTE = ['#059669', '#0d9488', '#f59e0b', '#EF4444', '#0284c7', '#10B981', '#9ca3af']
 
 export function CategoryDonut({ data, size = 180, currency = 'NGN' }) {
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const total = data.reduce((sum, d) => sum + d.value, 0)
   if (total <= 0) {
     return <Text style={styles.empty}>No spending recorded yet.</Text>
@@ -59,18 +62,19 @@ export function CategoryDonut({ data, size = 180, currency = 'NGN' }) {
   )
 }
 
-const styles = StyleSheet.create({
-  wrap: { alignItems: 'center' },
-  center: {
-    position: 'absolute',
-    top: 90,
-    alignItems: 'center'
-  },
-  centerLabel: { fontSize: 12, color: colors.textSecondary },
-  centerValue: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  swatch: { width: 10, height: 10, borderRadius: radii.sm },
-  legendText: { fontSize: 12, color: colors.textSecondary },
-  empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 24 }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    wrap: { alignItems: 'center' },
+    center: {
+      position: 'absolute',
+      top: 90,
+      alignItems: 'center'
+    },
+    centerLabel: { fontSize: 12, color: colors.textSecondary },
+    centerValue: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+    legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+    legendRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    swatch: { width: 10, height: 10, borderRadius: radii.sm },
+    legendText: { fontSize: 12, color: colors.textSecondary },
+    empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 24 }
+  })

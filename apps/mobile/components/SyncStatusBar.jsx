@@ -1,11 +1,14 @@
+import { useMemo } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSyncStore } from '../store/sync.js'
-import { colors, radii } from '../constants/theme.js'
+import { radii, useTheme } from '../constants/theme.js'
 
 // Compact header status showing pending items and last sync. Tapping while
 // idle triggers a manual sync (sync tab / pull-to-refresh).
 export function SyncStatusBar({ onPress }) {
   const { pendingCount, syncing, deadLettered, lastSyncTimestamp } = useSyncStore()
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
 
   if (pendingCount === 0 && deadLettered === 0 && !syncing) {
     return (
@@ -32,17 +35,18 @@ export function SyncStatusBar({ onPress }) {
   )
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8
-  },
-  dot: { width: 10, height: 10, borderRadius: radii.sm },
-  ok: { backgroundColor: colors.successGreen },
-  busy: { backgroundColor: colors.warningAmber },
-  issue: { backgroundColor: colors.warningRed },
-  text: { flex: 1, fontSize: 12, color: colors.textSecondary },
-  count: { fontSize: 12, color: colors.textPrimary }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 8
+    },
+    dot: { width: 10, height: 10, borderRadius: radii.sm },
+    ok: { backgroundColor: colors.successGreen },
+    busy: { backgroundColor: colors.warningAmber },
+    issue: { backgroundColor: colors.warningRed },
+    text: { flex: 1, fontSize: 12, color: colors.textSecondary },
+    count: { fontSize: 12, color: colors.textPrimary }
+  })

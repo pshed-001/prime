@@ -1,10 +1,13 @@
+import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Canvas, Rect, Group } from '@shopify/react-native-skia'
-import { colors, radii } from '../constants/theme.js'
+import { radii, useTheme } from '../constants/theme.js'
 
 // Last-30-day spending bar chart (design doc 6.1.1). Skia drawn; labels are
 // RN text to keep font handling simple.
 export function SpendingChart({ data, height = 160, currency = 'NGN' }) {
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   if (!data || data.length === 0) {
     return <Text style={styles.empty}>No spending in the last 30 days.</Text>
   }
@@ -44,8 +47,9 @@ export function SpendingChart({ data, height = 160, currency = 'NGN' }) {
   )
 }
 
-const styles = StyleSheet.create({
-  empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 24 },
-  labels: { flexDirection: 'row', justifyContent: 'space-between', width: 320 },
-  label: { fontSize: 12, color: colors.textSecondary, borderRadius: radii.sm }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 24 },
+    labels: { flexDirection: 'row', justifyContent: 'space-between', width: 320 },
+    label: { fontSize: 12, color: colors.textSecondary, borderRadius: radii.sm }
+  })

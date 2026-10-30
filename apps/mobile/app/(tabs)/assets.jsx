@@ -6,13 +6,15 @@ import { CategoryIcon } from '../../components/CategoryIcon.jsx'
 import { AddAssetBottomSheet } from '../../components/AddAssetBottomSheet.jsx'
 import { useAssetsStore } from '../../store/assets.js'
 import { useSettingsStore } from '../../store/settings.js'
-import { colors, radii, spacing } from '../../constants/theme.js'
+import { radii, spacing, useTheme } from '../../constants/theme.js'
 
 export default function AssetsScreen() {
   const assets = useAssetsStore((s) => s.assets)
   const load = useAssetsStore((s) => s.load)
   const remove = useAssetsStore((s) => s.remove)
   const base = useSettingsStore((s) => s.baseCurrency)
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const [addSheet, setAddSheet] = useState(false)
 
   useEffect(() => {
@@ -60,24 +62,40 @@ export default function AssetsScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
-  summary: {
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    padding: spacing.lg
-  },
-  summaryLabel: { fontSize: 13, color: colors.textSecondary },
-  summaryValue: { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginTop: 4 },
-  list: { padding: spacing.lg, paddingBottom: 96 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
-  middle: { flex: 1 },
-  title: { fontSize: 15, color: colors.textPrimary },
-  caption: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  value: { fontSize: 14, fontWeight: '500' },
-  delete: { fontSize: 16, color: colors.textSecondary },
-  empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 32, textAlign: 'center' },
-  fab: { position: 'absolute', right: spacing.lg, bottom: spacing.lg, backgroundColor: colors.primary, borderRadius: radii.lg, paddingHorizontal: 20, paddingVertical: 12 },
-  fabText: { color: '#fff', fontWeight: '600', fontSize: 14 }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    summary: {
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      padding: spacing.lg
+    },
+    summaryLabel: { fontSize: 13, color: colors.textSecondary },
+    summaryValue: { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginTop: 4 },
+    list: { padding: spacing.lg, paddingBottom: 96 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border
+    },
+    middle: { flex: 1 },
+    title: { fontSize: 15, color: colors.textPrimary },
+    caption: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+    value: { fontSize: 14, fontWeight: '500' },
+    delete: { fontSize: 16, color: colors.textSecondary },
+    empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 32, textAlign: 'center' },
+    fab: {
+      position: 'absolute',
+      right: spacing.lg,
+      bottom: spacing.lg,
+      backgroundColor: colors.primary,
+      borderRadius: radii.lg,
+      paddingHorizontal: 20,
+      paddingVertical: 12
+    },
+    fabText: { color: '#ffffff', fontWeight: '600', fontSize: 14 }
+  })

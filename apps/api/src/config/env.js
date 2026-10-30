@@ -42,6 +42,10 @@ export const env = {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
+  trustProxyIps: (process.env.TRUST_PROXY_IPS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
   appScheme: process.env.APP_SCHEME ?? 'prime',
   privacyPolicyUrl: process.env.PRIVACY_POLICY_URL ?? 'https://itgel.com/privacy'
 }

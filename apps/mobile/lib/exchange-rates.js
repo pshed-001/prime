@@ -29,8 +29,14 @@ export async function getRate({ from, to }) {
   try {
     const { apiClient } = await import('./api.js')
     const res = await apiClient.get(`/exchange-rates?from=${from}&to=${to}`)
-    const { rate } = res.data.data
-    const result = { rate, estimated: false }
+    const data = res.data.data ?? {}
+    // Server contract is { fromCurrency, toCurrency, rate, isEstimate, fetchedAt };
+    // the older bulk response is { baseCurrency, rates: { CURRENCY: { rate, isEstimate } } }.
+    const rateInfo = data.rate != null ? data : data.rates?.[from] ?? data.rates?.[to]
+    const rate = Number(rateInfo?.rate)
+    const estimated = rateInfo?.isEstimate === true
+    if (!Number.isFinite(rate) || rate <= 0) throw new Error('no rate returned')
+    const result = { rate, estimated }
     cache.set(key, { ...result, fetchedAt: Date.now() })
     await db.runAsync(
       `INSERT INTO exchange_rate_snapshots (id, from_currency, to_currency, rate, source)

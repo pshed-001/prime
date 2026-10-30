@@ -1,15 +1,17 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { Link, useLocalSearchParams } from 'expo-router'
 import { ErrorBanner } from '../../components/ErrorBanner.jsx'
 import { useAuthStore } from '../../store/auth.js'
-import { colors, radii, spacing } from '../../constants/theme.js'
+import { radii, spacing, useTheme } from '../../constants/theme.js'
 
 // Verification is token-based: the email link hits GET /api/auth/verify-email?token=....
 // The app deep-links by token on iOS; on Android the token can be pasted here.
 export default function VerifyEmailScreen() {
   const { email, token } = useLocalSearchParams()
   const verifyEmail = useAuthStore((s) => s.verifyEmail)
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const [tokenInput, setTokenInput] = useState(typeof token === 'string' ? token : '')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -55,11 +57,11 @@ export default function VerifyEmailScreen() {
             onChangeText={setTokenInput}
             autoCapitalize="none"
             placeholder="paste verification code"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textSecondary}
           />
           <Pressable style={styles.submit} onPress={submit} disabled={busy}>
             {busy ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#ffffff" />
             ) : (
               <Text style={styles.submitText}>Verify</Text>
             )}
@@ -74,28 +76,29 @@ export default function VerifyEmailScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  content: { flex: 1, backgroundColor: colors.background, padding: spacing.xl, paddingTop: 72 },
-  title: { fontSize: 24, fontWeight: '600', color: colors.textPrimary },
-  subtitle: { fontSize: 14, color: colors.textSecondary, marginTop: 4, marginBottom: spacing.xl },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface
-  },
-  submit: {
-    backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginTop: spacing.xl
-  },
-  submitText: { color: '#fff', fontWeight: '600', fontSize: 15 },
-  done: { fontSize: 15, color: colors.successGreen, marginBottom: spacing.lg },
-  link: { color: colors.primary, fontSize: 14, marginTop: spacing.xl, fontWeight: '600' }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    content: { flex: 1, backgroundColor: colors.background, padding: spacing.xl, paddingTop: 72 },
+    title: { fontSize: 24, fontWeight: '600', color: colors.textPrimary },
+    subtitle: { fontSize: 14, color: colors.textSecondary, marginTop: 4, marginBottom: spacing.xl },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.md,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      fontSize: 14,
+      color: colors.textPrimary,
+      backgroundColor: colors.surface
+    },
+    submit: {
+      backgroundColor: colors.primary,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      paddingVertical: 12,
+      marginTop: spacing.xl
+    },
+    submitText: { color: '#ffffff', fontWeight: '600', fontSize: 15 },
+    done: { fontSize: 15, color: colors.successGreen, marginBottom: spacing.lg },
+    link: { color: colors.primary, fontSize: 14, marginTop: spacing.xl, fontWeight: '600' }
+  })

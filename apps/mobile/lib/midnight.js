@@ -8,7 +8,7 @@
 //   2. On every app foreground (AppState 'active') - MOB-04.
 //   3. Manual "Generate" button on the Reports screen.
 import * as Print from 'expo-print'
-import * as Notifications from 'expo-notifications'
+// import * as Notifications from 'expo-notifications'
 import * as BackgroundFetch from 'expo-background-fetch'
 import * as TaskManager from 'expo-task-manager'
 import { getDb } from './database.js'
@@ -45,7 +45,7 @@ async function renderPdf(report, date) {
     <html>
       <head><style>
         body { font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; }
-        h1 { font-size: 20px; color: #7c3aed; }
+        h1 { font-size: 20px; color: #059669; }
         .row { display: flex; justify-content: space-between; margin: 6px 0; }
         .label { color: #6b7280; }
         .total { border-top: 1px solid #e2e8f0; margin-top: 8px; padding-top: 8px; font-weight: 700; }
@@ -90,14 +90,14 @@ export async function generatePreviousDayReport(checkDate = new Date()) {
     pdfPath
   )
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'PRIME Report ready',
-      body: `${reportDate} report generated. Open Reports to view the PDF.`,
-      data: { reportId: id, path: pdfPath }
-    },
-    trigger: null
-  })
+  // await Notifications.scheduleNotificationAsync({
+  //   content: {
+  //     title: 'PRIME Report ready',
+  //     body: `${reportDate} report generated. Open Reports to view the PDF.`,
+  //     data: { reportId: id, path: pdfPath }
+  //   },
+  //   trigger: null
+  // })
   return id
 }
 

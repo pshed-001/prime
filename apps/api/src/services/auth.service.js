@@ -86,11 +86,11 @@ export async function register({ email, password, timezone, baseCurrency }) {
     }
   })
 
-  try {
-    await sendVerificationEmail({ to: email, token })
-  } catch (error) {
+  // Fire-and-forget: the response must stay in the ms range; failures are still
+  // captured and logged (matching the previous try/catch semantics).
+  sendVerificationEmail({ to: email, token }).catch((error) => {
     logger.error('[auth] verification email send failed', { email, error: error.message })
-  }
+  })
 
   return { message: 'Account created. Check your email to verify your account.' }
 }
@@ -422,11 +422,10 @@ export async function forgotPassword(email) {
         purpose: 'PASSWORD_RESET'
       }
     })
-    try {
-      await sendPasswordResetEmail({ to: email, token })
-    } catch (error) {
+    // Fire-and-forget with the same logged failure handling (non-blocking).
+    sendPasswordResetEmail({ to: email, token }).catch((error) => {
       logger.error('[auth] reset email failed', { email, error: error.message })
-    }
+    })
   }
   return { message: 'If an account exists for that email, a reset link has been sent.' }
 }

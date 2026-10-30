@@ -13,7 +13,7 @@ import { useTasksStore } from '../../store/tasks.js'
 import { useSettingsStore } from '../../store/settings.js'
 import { useSyncStore } from '../../store/sync.js'
 import { runOnce } from '../../lib/sync.js'
-import { colors, radii, spacing } from '../../constants/theme.js'
+import { radii, spacing, useTheme } from '../../constants/theme.js'
 
 export default function DashboardScreen() {
   const base = useSettingsStore((s) => s.baseCurrency)
@@ -25,6 +25,8 @@ export default function DashboardScreen() {
   const loadAssets = useAssetsStore((s) => s.load)
   const loadTasks = useTasksStore((s) => s.load)
   const refreshCounts = useSyncStore((s) => s.refreshCounts)
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const [addSheet, setAddSheet] = useState(false)
 
   useEffect(() => {
@@ -151,38 +153,39 @@ export default function DashboardScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: 32 },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md
-  },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 },
-  balance: { fontSize: 26, fontWeight: '700', color: colors.textPrimary },
-  caption: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
-  link: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-  taskRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border
-  },
-  taskTitle: { flex: 1, fontSize: 14, color: colors.textPrimary },
-  actions: { flexDirection: 'row', gap: 8 },
-  action: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    paddingVertical: 12
-  },
-  actionText: { color: '#fff', fontWeight: '600', fontSize: 15 }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    content: { padding: spacing.lg, paddingBottom: 32 },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: radii.lg,
+      padding: spacing.lg,
+      marginBottom: spacing.md
+    },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    cardTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 },
+    balance: { fontSize: 26, fontWeight: '700', color: colors.textPrimary },
+    caption: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
+    link: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+    taskRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 6,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border
+    },
+    taskTitle: { flex: 1, fontSize: 14, color: colors.textPrimary },
+    actions: { flexDirection: 'row', gap: 8 },
+    action: {
+      flex: 1,
+      backgroundColor: colors.primary,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      paddingVertical: 12
+    },
+    actionText: { color: '#ffffff', fontWeight: '600', fontSize: 15 }
+  })

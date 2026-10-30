@@ -304,7 +304,7 @@ export function startAutoSync() {
 export function stopAutoSync() {
   cancelled = true
   if (unsubscribeNetInfo) unsubscribeNetInfo()
-  if (unsubscribeAppState) unsubscribeAppState()
+  if (unsubscribeAppState) unsubscribeAppState.remove()
 }
 
 export function setCancelled(value) {

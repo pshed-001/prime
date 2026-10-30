@@ -7,11 +7,16 @@ import { ipRateLimiter, slowDown, userRateLimiter } from './middleware/rateLimit
 import { deviceFingerprint } from './middleware/deviceFingerprint.js'
 import { authenticateJWT, injectRLSContext } from './middleware/authenticate.js'
 import { notFoundHandler, globalErrorHandler } from './middleware/errorHandler.js'
+import { httpRequestLogger } from './lib/logger.js'
+import { buildTrustFn } from './lib/trustProxy.js'
 import apiRouter from './routes/index.js'
 
 export function createApp() {
   const app = express()
-  app.set('trust proxy', 1)
+  // Only IPs/CIDRs listed in TRUST_PROXY_IPS may supply X-Forwarded-For.
+  // With an empty default, req.ip is always the socket address and a client
+  // cannot spoof the IP that the rate limiters key on (API-06).
+  app.set('trust proxy', buildTrustFn(env.trustProxyIps))
 
   // 12.2 - middleware stack in this exact order
   app.use(helmet()) // 1
@@ -30,6 +35,7 @@ export function createApp() {
   app.use(authenticateJWT) // 8
   app.use(userRateLimiter) // 9 - separate from IP limit
   app.use(injectRLSContext) // 10 - SET LOCAL app.current_user_id
+  app.use(httpRequestLogger) // access log with userId/deviceId/duration
 
   app.get('/health', (_req, res) => {
     res.status(200).json({

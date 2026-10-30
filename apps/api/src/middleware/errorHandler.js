@@ -14,8 +14,12 @@ export function notFoundHandler(req, res) {
 export function globalErrorHandler(err, req, res, next) {
   logger.error('[http] request failed', {
     method: req.method,
-    path: req.path,
+    path: req.originalUrl,
+    status: err?.status ?? res.statusCode,
     userId: req.user?.id ?? null,
+    deviceId: req.deviceId ?? null,
+    ip: req.ip ?? null,
+    code: err?.code ?? null,
     error: err?.message
   })
   // Never leak stack traces in production (rule API-03 / C-01).

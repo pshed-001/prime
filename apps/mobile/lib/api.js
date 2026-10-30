@@ -1,25 +1,37 @@
-// API client with JWT attachment, transparent refresh, and certificate
-// pinning config (blueprint 9.1 / 9.3).
+// API client with JWT attachment, transparent refresh, and a fail-closed
+// transport-security guard (blueprint 9.1 / 9.3).
 import axios from 'axios'
 import * as SecureStore from 'expo-secure-store'
 import { getDeviceFingerprint } from './device.js'
+import { assertSecureEndpoint } from './network-security.js'
 
 const SECURE_STORE_OPTIONS = {
   keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY
 }
 
-// How to generate a pin hash:
-//   openssl s_client -connect api.prime.itgel.com:443 \
-//     | openssl x509 -pubkey -noout \
-//     | openssl pkey -pubin -outform der \
-//     | openssl dgst -sha256 -binary | base64
-// MOB-05: minimum two pins - current leaf + intermediate CA backup.
-const PINNED_CERTS = [
-  'sha256/REPLACE_WITH_LEAF_CERT_HASH',
-  'sha256/REPLACE_WITH_INTERMEDIATE_CA_HASH'
-]
+// React Native's fetch/axios stack cannot inspect server certificates from JS,
+// so TLS is verified by the OS and public-key pinning is NOT enforced here.
+// To add real pinning later, install a native module (react-native-ssl-pinning)
+// and rebuild. This array is the single agreed source for that provider's pin
+// set, supplied via EXPO_PUBLIC_API_PINS (comma-separated "sha256/<base64>"
+// hashes produced from the leaf/intermediate public keys).
+const PINNED_CERTS = (process.env.EXPO_PUBLIC_API_PINS ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter((s) => /^sha256\/[A-Za-z0-9+/=]+$/.test(s))
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api'
+
+// Fail closed in production builds: refuse a clear-text external API endpoint
+// at module load. LOCAL / emulator http aliases stay available for debug
+// builds running against a machine-local API.
+const isProductionBuild = typeof __DEV__ === 'undefined' ? true : !__DEV__
+if (isProductionBuild) {
+  const check = assertSecureEndpoint(BASE_URL, { production: true })
+  if (!check.ok) {
+    throw new Error(`[api] refusing to start: ${check.reason}`)
+  }
+}
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -74,7 +86,7 @@ apiClient.interceptors.response.use(
       return apiClient(original)
     } catch (refreshError) {
       const { useAuthStore } = await import('../store/auth.js')
-      useAuthStore.getState().logout()
+      useAuthStore.getState().sessionExpired()
       return Promise.reject(refreshError)
     }
   }

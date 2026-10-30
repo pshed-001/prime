@@ -11,6 +11,8 @@ function rateHistoryCutoffDate() {
   return new Date(Date.now() - STALE_MS)
 }
 
+export { rateHistoryCutoffDate }
+
 async function fetchFreshRate(fromCurrency, toCurrency) {
   try {
     const url = `${env.exchangeRateApiUrl}/${fromCurrency}`

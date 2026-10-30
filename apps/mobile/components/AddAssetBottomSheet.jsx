@@ -1,19 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
-import { Sheet, fieldStyles as f } from './Sheet.jsx'
+import { Sheet, createFieldStyles } from './Sheet.jsx'
 import { EstimatedBadge } from './EstimatedBadge.jsx'
 import { useAssetsStore } from '../store/assets.js'
 import { useSettingsStore } from '../store/settings.js'
 import { getRate } from '../lib/exchange-rates.js'
 import { ASSET_CATEGORY_DICT, currencyList } from '../constants/categories.js'
 import { formatMoney, toLocalDateTime } from '../utils/format.js'
-import { colors } from '../constants/theme.js'
+import { useTheme } from '../constants/theme.js'
 
 const CATEGORIES = Object.keys(ASSET_CATEGORY_DICT)
 
 export function AddAssetBottomSheet({ visible, onClose }) {
   const add = useAssetsStore((s) => s.add)
   const base = useSettingsStore((s) => s.baseCurrency)
+  const theme = useTheme()
+  const f = useMemo(() => createFieldStyles(theme), [theme])
 
   const [name, setName] = useState('')
   const [category, setCategory] = useState('CASH')
@@ -98,7 +100,7 @@ export function AddAssetBottomSheet({ visible, onClose }) {
         placeholderTextColor={'#9ca3af'}
       />
       {currency !== base ? (
-        <Text style={{ fontSize: 12, marginTop: 4, color: colors.textSecondary }}>
+        <Text style={{ fontSize: 12, marginTop: 4, color: theme.textSecondary }}>
           ≈ {formatMoney(converted, base)} <EstimatedBadge visible={rate.estimated} />
         </Text>
       ) : null}

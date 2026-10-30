@@ -1,13 +1,16 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
-import { Sheet, fieldStyles as f } from './Sheet.jsx'
+import { Sheet, createFieldStyles } from './Sheet.jsx'
 import { useTasksStore } from '../store/tasks.js'
+import { useTheme } from '../constants/theme.js'
 import { toLocalDateTime } from '../utils/format.js'
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
 
 export function AddTaskBottomSheet({ visible, onClose }) {
   const add = useTasksStore((s) => s.add)
+  const theme = useTheme()
+  const f = useMemo(() => createFieldStyles(theme), [theme])
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('MEDIUM')

@@ -4,7 +4,14 @@ import { getRlsUserId } from './rls.js'
 import { env } from '../config/env.js'
 
 export const basePrisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: env.databaseUrl }),
+  // pg.PoolConfig: fail fast when the pool is exhausted (connectionTimeoutMillis)
+  // instead of hanging an operation, which supports the API's <3s operation goal.
+  adapter: new PrismaPg({
+    connectionString: env.databaseUrl,
+    max: 10,
+    connectionTimeoutMillis: 2000,
+    idleTimeoutMillis: 30000
+  }),
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error']
 })
 

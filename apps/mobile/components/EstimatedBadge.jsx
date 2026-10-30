@@ -1,9 +1,12 @@
+import { useMemo } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { colors, radii } from '../constants/theme.js'
+import { radii, useTheme } from '../constants/theme.js'
 
 // Amber badge marking amounts converted with an estimated/stale exchange
 // rate (design doc 8.4).
 export function EstimatedBadge({ visible }) {
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   if (!visible) return null
   return (
     <View style={styles.badge}>
@@ -13,17 +16,18 @@ export function EstimatedBadge({ visible }) {
   )
 }
 
-const styles = StyleSheet.create({
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderColor: colors.estimated,
-    borderWidth: 1,
-    borderRadius: radii.sm,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    marginLeft: 4
-  },
-  dot: { color: colors.estimated, fontSize: 10, fontWeight: '700' },
-  text: { color: colors.estimated, fontSize: 10, marginLeft: 2 }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    badge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderColor: colors.estimated,
+      borderWidth: 1,
+      borderRadius: radii.sm,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+      marginLeft: 4
+    },
+    dot: { color: colors.estimated, fontSize: 10, fontWeight: '700' },
+    text: { color: colors.estimated, fontSize: 10, marginLeft: 2 }
+  })

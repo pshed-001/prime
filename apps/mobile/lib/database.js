@@ -1,14 +1,19 @@
-// SQLite on-device database (blueprint 5.1 / 5.2).
-// The decryption key is generated on first launch and stored in
-// expo-secure-store under "prime_db_key" (MOB-02 / MOB-03). Key is never
-// hardcoded or bundled.
+// SQLite on-device database, encrypted at rest (blueprint 5.1 / 5.2).
+// expo-sqlite is compiled with SQLCipher ("useSQLCipher": true in app.json),
+// and the DB key is generated on first launch, kept in expo-secure-store under
+// "prime_db_key", and applied with `PRAGMA key` immediately after opening.
+// The key is never hardcoded or bundled. Requires a development/production
+// build - Expo Go does not support SQLCipher.
 import * as SQLite from 'expo-sqlite'
 import * as SecureStore from 'expo-secure-store'
 import * as Crypto from 'expo-crypto'
+import { File, Paths } from 'expo-file-system'
 
 const SECURE_STORE_OPTIONS = {
   keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY
 }
+
+const DB_NAME = 'prime.db'
 
 let dbPromise = null
 
@@ -20,6 +25,73 @@ async function getOrCreateKey() {
     await SecureStore.setItemAsync('prime_db_key', key, SECURE_STORE_OPTIONS)
   }
   return key
+}
+
+function databaseFiles() {
+  // SQLCipher encrypts the main file, WAL and SHM companions on disk, so all
+  // three must be removed when discarding the database.
+  return ['', '-wal', '-shm'].map(
+    (suffix) => new File(Paths.document, 'SQLite', `${DB_NAME}${suffix}`)
+  )
+}
+
+async function deleteDatabaseFiles() {
+  for (const file of databaseFiles()) {
+    try {
+      if (file.exists) file.delete()
+    } catch {
+      // already gone or locked; the error below will surface if it matters
+    }
+  }
+}
+
+function isEncryptedFileError(error) {
+  // SQLCipher raises this when an unkeyed/plaintext file is opened with a
+  // key, or when the adopted key does not match a previously-encrypted file.
+  const message = String(error?.message ?? error ?? '')
+  return /file is not a database|not a database/i.test(message)
+}
+
+// PRAGMA key must run before any other statement on the connection.
+async function openKeyedDb() {
+  const db = await SQLite.openDatabaseAsync(DB_NAME)
+  await db.execAsync(`PRAGMA key = '${await getOrCreateKey()}';`)
+  return db
+}
+
+async function configure(db) {
+  await db.execAsync('PRAGMA journal_mode = WAL;')
+  await db.execAsync('PRAGMA foreign_keys = ON;')
+}
+
+async function initDatabase() {
+  try {
+    const db = await openKeyedDb()
+    await configure(db)
+    await runMigrations(db)
+    return db
+  } catch (error) {
+    if (!isEncryptedFileError(error)) throw error
+    // A database created before SQLCipher was enabled is plaintext and cannot
+    // be re-keyed in place - discard it and rebuild encrypted on first use.
+    await deleteDatabaseFiles()
+    const db = await openKeyedDb()
+    await configure(db)
+    await runMigrations(db)
+    return db
+  }
+}
+
+async function runMigrations(db) {
+  for (const statement of MIGRATIONS) {
+    await db.execAsync(statement)
+  }
+}
+
+export async function getDb() {
+  if (dbPromise) return dbPromise
+  dbPromise = initDatabase()
+  return dbPromise
 }
 
 const MIGRATIONS = [
@@ -162,25 +234,6 @@ const MIGRATIONS = [
   );
   `
 ]
-
-async function runMigrations(db) {
-  for (const statement of MIGRATIONS) {
-    await db.execAsync(statement)
-  }
-}
-
-export async function getDb() {
-  if (dbPromise) return dbPromise
-  dbPromise = (async () => {
-    await getOrCreateKey()
-    const db = await SQLite.openDatabaseAsync('prime.db')
-    await db.execAsync('PRAGMA journal_mode = WAL;')
-    await db.execAsync('PRAGMA foreign_keys = ON;')
-    await runMigrations(db)
-    return db
-  })()
-  return dbPromise
-}
 
 export async function clearDatabase() {
   const db = await getDb()

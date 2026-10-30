@@ -7,6 +7,7 @@ import reportRoutes from './reports.js'
 import syncRoutes from './sync.js'
 import aiRoutes from './ai.js'
 import exchangeRateRoutes from './exchange-rates.js'
+import marketRoutes from './market.js'
 
 const router = Router()
 
@@ -18,5 +19,6 @@ router.use('/reports', reportRoutes)
 router.use('/sync', syncRoutes)
 router.use('/ai', aiRoutes)
 router.use('/exchange-rates', exchangeRateRoutes)
+router.use('/market', marketRoutes)
 
 export default router

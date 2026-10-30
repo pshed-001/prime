@@ -1,14 +1,14 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
+import * as LocalAuthentication from 'expo-local-authentication'
 import { SyncStatusBar } from '../../components/SyncStatusBar.jsx'
-import { useAuthStore } from '../../store/auth.js'
+import { useAuthStore, isBiometricEnabled } from '../../store/auth.js'
 import { useSettingsStore } from '../../store/settings.js'
 import { useSyncStore } from '../../store/sync.js'
-import { getDb } from '../../lib/database.js'
 import { runOnce } from '../../lib/sync.js'
 import { currencyList } from '../../constants/categories.js'
-import { colors, radii, spacing } from '../../constants/theme.js'
+import { radii, spacing, useTheme } from '../../constants/theme.js'
 
 const THEMES = ['system', 'light', 'dark']
 const TIMEZONES = ['Africa/Lagos', 'Africa/Accra', 'Africa/Nairobi', 'Europe/London', 'America/New_York']
@@ -17,28 +17,45 @@ export default function SettingsScreen() {
   const router = useRouter()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
+  const setBiometricEnabled = useAuthStore((s) => s.setBiometricEnabled)
   const settings = useSettingsStore()
   const sync = useSyncStore()
   const deadLettered = sync.deadLettered
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
+
+  const [biometric, setBiometric] = useState(false)
 
   useEffect(() => {
     sync.refreshCounts()
+    isBiometricEnabled().then(setBiometric)
   }, [])
 
   async function handleLogout() {
-    Alert.alert('Sign out', 'You will need to log in again on this device.', [
+    Alert.alert('Sign out', 'You will need to sign in again on this device.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out',
         style: 'destructive',
         onPress: async () => {
           await logout()
-          const db = await getDb()
-          await db.execAsync('DELETE FROM sync_queue;')
           router.replace('/(auth)/login')
         }
       }
     ])
+  }
+
+  async function handleToggleBiometric(enabled) {
+    if (enabled) {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Confirm with your fingerprint or face to enable biometric unlock',
+        cancelLabel: 'Cancel',
+        disableDeviceFallback: false
+      })
+      if (!result.success) return
+    }
+    await setBiometricEnabled(enabled)
+    setBiometric(enabled)
   }
 
   async function handleRetry() {
@@ -56,7 +73,7 @@ export default function SettingsScreen() {
           text: 'Discard',
           style: 'destructive',
           onPress: async () => {
-            const db = await getDb()
+            const db = await import('../../lib/database.js').then((m) => m.getDb())
             await db.runAsync('DELETE FROM sync_queue WHERE dead_lettered = 1')
             sync.refreshCounts()
           }
@@ -69,15 +86,12 @@ export default function SettingsScreen() {
     <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
       <SyncStatusBar onPress={handleRetry} />
 
-      <Section title="Account">
+      <Section styles={styles} title="Account">
         <Text style={styles.caption}>{user?.name ?? 'Signed in'}</Text>
         <Text style={styles.caption}>{user?.email ?? ''}</Text>
-        <Pressable style={styles.rowPress} onPress={() => router.push('/(auth)/biometric')}>
-          <Text style={styles.rowText}>Biometric unlock</Text>
-        </Pressable>
       </Section>
 
-      <Section title="Preferences">
+      <Section styles={styles} title="Preferences">
         <Text style={styles.label}>Theme</Text>
         <View style={styles.chips}>
           {THEMES.map((t) => (
@@ -144,7 +158,17 @@ export default function SettingsScreen() {
         </View>
       </Section>
 
-      <Section title="Privacy">
+      <Section styles={styles} title="Security">
+        <View style={styles.row}>
+          <View style={styles.middle}>
+            <Text style={styles.rowText}>Biometric unlock</Text>
+            <Text style={styles.caption}>Unlock PRIME with your fingerprint or face.</Text>
+          </View>
+          <Switch value={biometric} onValueChange={handleToggleBiometric} trackColor={{ true: colors.primary }} />
+        </View>
+      </Section>
+
+      <Section styles={styles} title="Privacy">
         <View style={styles.row}>
           <View style={styles.middle}>
             <Text style={styles.rowText}>Allow AI features</Text>
@@ -157,7 +181,7 @@ export default function SettingsScreen() {
         </View>
       </Section>
 
-      <Section title="Sync">
+      <Section styles={styles} title="Sync">
         {deadLettered > 0 ? (
           <>
             <Text style={styles.caption}>
@@ -185,7 +209,7 @@ export default function SettingsScreen() {
   )
 }
 
-function Section({ title, children }) {
+function Section({ styles, title, children }) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -194,71 +218,71 @@ function Section({ title, children }) {
   )
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: 48 },
-  section: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 8
-  },
-  label: { fontSize: 12, color: colors.textSecondary, marginTop: 12 },
-  caption: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: colors.background
-  },
-  chipActive: { borderColor: colors.primary },
-  chipText: { fontSize: 12, color: colors.textSecondary },
-  chipTextActive: { color: colors.primary, fontWeight: '600' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  rowPress: { paddingVertical: 8 },
-  rowDouble: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  middle: { flex: 1 },
-  rowText: { fontSize: 14, color: colors.textPrimary },
-  button: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    paddingVertical: 10
-  },
-  buttonText: { color: colors.primary, fontWeight: '600', fontSize: 13 },
-  buttonDanger: { borderColor: colors.warningRed },
-  stepper: { flexDirection: 'row', gap: 8 },
-  stepButton: {
-    width: 36,
-    height: 36,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background
-  },
-  stepText: { fontSize: 18, color: colors.textPrimary },
-  logout: {
-    borderWidth: 1,
-    borderColor: colors.warningRed,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginTop: spacing.sm
-  },
-  logoutText: { color: colors.warningRed, fontWeight: '600', fontSize: 15 }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    content: { padding: spacing.lg, paddingBottom: 48 },
+    section: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.lg,
+      padding: spacing.lg,
+      marginBottom: spacing.md
+    },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: 8
+    },
+    label: { fontSize: 12, color: colors.textSecondary, marginTop: 12 },
+    caption: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.md,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      backgroundColor: colors.background
+    },
+    chipActive: { borderColor: colors.primary },
+    chipText: { fontSize: 12, color: colors.textSecondary },
+    chipTextActive: { color: colors.primary, fontWeight: '600' },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+    rowDouble: { flexDirection: 'row', gap: 8, marginTop: 8 },
+    middle: { flex: 1 },
+    rowText: { fontSize: 14, color: colors.textPrimary },
+    button: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      paddingVertical: 10
+    },
+    buttonText: { color: colors.primary, fontWeight: '600', fontSize: 13 },
+    buttonDanger: { borderColor: colors.warningRed },
+    stepper: { flexDirection: 'row', gap: 8 },
+    stepButton: {
+      width: 36,
+      height: 36,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.background
+    },
+    stepText: { fontSize: 18, color: colors.textPrimary },
+    logout: {
+      borderWidth: 1,
+      borderColor: colors.warningRed,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      paddingVertical: 12,
+      marginTop: spacing.sm
+    },
+    logoutText: { color: colors.warningRed, fontWeight: '600', fontSize: 15 }
+  })

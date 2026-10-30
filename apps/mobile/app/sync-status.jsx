@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 import { SyncStatusBar } from '../components/SyncStatusBar.jsx'
 import { useSyncStore } from '../store/sync.js'
 import { getDb } from '../lib/database.js'
 import { runOnce } from '../lib/sync.js'
 import { discardDeadLettered, retryDeadLettered } from '../lib/queue.js'
-import { colors, radii, spacing } from '../constants/theme.js'
+import { radii, spacing, useTheme } from '../constants/theme.js'
 
 export default function SyncStatusScreen() {
   const { pendingCount, syncing } = useSyncStore()
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const [dead, setDead] = useState([])
 
   async function loadDead() {
@@ -82,48 +84,49 @@ export default function SyncStatusScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
-  header: { padding: spacing.lg, paddingBottom: 0 },
-  sync: {
-    backgroundColor: colors.secondary,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    paddingVertical: 10,
-    marginTop: 8
-  },
-  syncText: { color: '#fff', fontWeight: '600', fontSize: 14 },
-  list: { padding: spacing.lg },
-  caption: { fontSize: 13, color: colors.textSecondary, marginBottom: 8 },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginBottom: 8
-  },
-  title: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-  meta: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  error: { fontSize: 12, color: colors.warningRed, marginTop: 6 },
-  actions: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  retry: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    paddingVertical: 8
-  },
-  retryText: { color: colors.primary, fontWeight: '600', fontSize: 13 },
-  discard: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.warningRed,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    paddingVertical: 8
-  },
-  discardText: { color: colors.warningRed, fontWeight: '600', fontSize: 13 },
-  empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 32, textAlign: 'center' }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    header: { padding: spacing.lg, paddingBottom: 0 },
+    sync: {
+      backgroundColor: colors.secondary,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      paddingVertical: 10,
+      marginTop: 8
+    },
+    syncText: { color: '#ffffff', fontWeight: '600', fontSize: 14 },
+    list: { padding: spacing.lg },
+    caption: { fontSize: 13, color: colors.textSecondary, marginBottom: 8 },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.lg,
+      padding: spacing.lg,
+      marginBottom: 8
+    },
+    title: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+    meta: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+    error: { fontSize: 12, color: colors.warningRed, marginTop: 6 },
+    actions: { flexDirection: 'row', gap: 8, marginTop: 10 },
+    retry: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      paddingVertical: 8
+    },
+    retryText: { color: colors.primary, fontWeight: '600', fontSize: 13 },
+    discard: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.warningRed,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      paddingVertical: 8
+    },
+    discardText: { color: colors.warningRed, fontWeight: '600', fontSize: 13 },
+    empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 32, textAlign: 'center' }
+  })

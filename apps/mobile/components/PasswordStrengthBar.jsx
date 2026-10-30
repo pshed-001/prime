@@ -1,13 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
-import { colors, radii } from '../constants/theme.js'
-
-const SCORES = [
-  { min: 0, label: 'Too weak', color: colors.warningRed },
-  { min: 1, label: 'Weak', color: colors.warningRed },
-  { min: 2, label: 'Fair', color: colors.warningAmber },
-  { min: 3, label: 'Good', color: '#7c3aed' },
-  { min: 4, label: 'Strong', color: colors.successGreen }
-]
+import { radii, useTheme } from '../constants/theme.js'
 
 export function passwordScore(password) {
   let score = 0
@@ -18,16 +10,39 @@ export function passwordScore(password) {
   return score
 }
 
+const LEVELS = [
+  { min: 0, label: 'Too weak' },
+  { min: 1, label: 'Weak' },
+  { min: 2, label: 'Fair' },
+  { min: 3, label: 'Good' },
+  { min: 4, label: 'Strong' }
+]
+
 export function PasswordStrengthBar({ password }) {
+  const colors = useTheme()
   const score = password ? passwordScore(password) : 0
-  const meta = SCORES.find((s) => score >= s.min) ?? SCORES[SCORES.length - 1]
-  const bars = [...Array(SCORES.length - 1)]
+  // Pick the highest level the score satisfies (find() would always return the
+  // first "Too weak" entry and keep the meter stuck on weak).
+  const meta = { ...LEVELS[LEVELS.length - 1] }
+  for (const level of LEVELS) {
+    if (score >= level.min) {
+      meta.label = level.label
+      meta.color =
+        score >= 3
+          ? colors.successGreen
+          : score === 2
+            ? colors.warningAmber
+            : colors.warningRed
+    }
+  }
+  if (score === 0) meta.color = colors.warningRed
+  const bars = [...Array(LEVELS.length - 1)]
   return (
     <View style={styles.row}>
       {bars.map((_, i) => (
         <View
           key={i}
-          style={[styles.bar, i < score ? { backgroundColor: meta.color } : styles.empty]}
+          style={[styles.bar, i < score ? { backgroundColor: meta.color } : { backgroundColor: colors.border }]}
         />
       ))}
       <Text style={[styles.label, { color: meta.color }]}>{meta.label}</Text>
@@ -38,6 +53,5 @@ export function PasswordStrengthBar({ password }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   bar: { flex: 1, height: 4, borderRadius: radii.sm },
-  empty: { backgroundColor: colors.border },
   label: { fontSize: 12, marginLeft: 4 }
 })

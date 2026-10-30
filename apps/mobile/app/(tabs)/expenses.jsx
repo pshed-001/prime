@@ -7,7 +7,7 @@ import { CategoryIcon } from '../../components/CategoryIcon.jsx'
 import { AddExpenseBottomSheet } from '../../components/AddExpenseBottomSheet.jsx'
 import { useExpensesStore } from '../../store/expenses.js'
 import { useSettingsStore } from '../../store/settings.js'
-import { colors, radii, spacing } from '../../constants/theme.js'
+import { radii, spacing, useTheme } from '../../constants/theme.js'
 import { timeOfDay } from '../../utils/format.js'
 
 const FILTERS = ['ALL', 'EXPENSE', 'INCOME']
@@ -17,6 +17,8 @@ export default function ExpensesScreen() {
   const load = useExpensesStore((s) => s.load)
   const remove = useExpensesStore((s) => s.remove)
   const base = useSettingsStore((s) => s.baseCurrency)
+  const colors = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
   const [filter, setFilter] = useState('ALL')
   const [addSheet, setAddSheet] = useState(false)
 
@@ -33,11 +35,13 @@ export default function ExpensesScreen() {
     const income = item.type === 'INCOME'
     const est = item.rate_is_est === 1
     return (
-      <Swipeable renderRightActions={() => (
-        <Pressable style={styles.delete} onPress={() => remove(item.id)}>
-          <Text style={styles.deleteText}>Delete</Text>
-        </Pressable>
-      )}>
+      <Swipeable
+        renderRightActions={() => (
+          <Pressable style={styles.delete} onPress={() => remove(item.id)}>
+            <Text style={styles.deleteText}>Delete</Text>
+          </Pressable>
+        )}
+      >
         <View style={styles.row}>
           <CategoryIcon category={item.category} />
           <View style={styles.middle}>
@@ -84,50 +88,51 @@ export default function ExpensesScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
-  filterRow: { flexDirection: 'row', gap: 8, padding: spacing.lg },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingHorizontal: 12,
-    paddingVertical: 6
-  },
-  chipActive: { borderColor: colors.primary },
-  chipText: { fontSize: 12, color: colors.textSecondary },
-  chipTextActive: { color: colors.primary, fontWeight: '600' },
-  list: { paddingHorizontal: spacing.lg, paddingBottom: 96 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border
-  },
-  middle: { flex: 1 },
-  title: { fontSize: 14, fontWeight: '500', color: colors.textPrimary },
-  caption: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  amount: { fontSize: 14, fontWeight: '500' },
-  empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 32, textAlign: 'center' },
-  delete: {
-    backgroundColor: colors.warningRed,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    borderRadius: radii.md,
-    marginVertical: 8
-  },
-  deleteText: { color: '#fff', fontWeight: '600', fontSize: 13 },
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    bottom: spacing.lg,
-    backgroundColor: colors.primary,
-    borderRadius: radii.lg,
-    paddingHorizontal: 20,
-    paddingVertical: 12
-  },
-  fabText: { color: '#fff', fontWeight: '600', fontSize: 14 }
-})
+const createStyles = (colors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    filterRow: { flexDirection: 'row', gap: 8, padding: spacing.lg },
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.md,
+      paddingHorizontal: 12,
+      paddingVertical: 6
+    },
+    chipActive: { borderColor: colors.primary },
+    chipText: { fontSize: 12, color: colors.textSecondary },
+    chipTextActive: { color: colors.primary, fontWeight: '600' },
+    list: { paddingHorizontal: spacing.lg, paddingBottom: 96 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border
+    },
+    middle: { flex: 1 },
+    title: { fontSize: 14, fontWeight: '500', color: colors.textPrimary },
+    caption: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+    amount: { fontSize: 14, fontWeight: '500' },
+    empty: { color: colors.textSecondary, fontSize: 13, paddingVertical: 32, textAlign: 'center' },
+    delete: {
+      backgroundColor: colors.warningRed,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      borderRadius: radii.md,
+      marginVertical: 8
+    },
+    deleteText: { color: '#ffffff', fontWeight: '600', fontSize: 13 },
+    fab: {
+      position: 'absolute',
+      right: spacing.lg,
+      bottom: spacing.lg,
+      backgroundColor: colors.primary,
+      borderRadius: radii.lg,
+      paddingHorizontal: 20,
+      paddingVertical: 12
+    },
+    fabText: { color: '#ffffff', fontWeight: '600', fontSize: 14 }
+  })
